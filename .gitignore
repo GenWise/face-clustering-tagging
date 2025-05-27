@@ -1,0 +1,4 @@
+test_images/
+keyframes/
+detected_faces/*.jpg
+*.pkl
