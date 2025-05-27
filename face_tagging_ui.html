@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Face Tagging UI</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    .face-card { display: inline-block; margin: 10px; border: 1px solid #ccc; padding: 10px; }
+    .face-card img { width: 128px; height: auto; display: block; margin-bottom: 5px; }
+    .face-card input { width: 100%; }
+  </style>
+</head>
+<body>
+  <h1>Tag Faces</h1>
+  <div id="container"></div>
+  <button onclick="saveTags()">Save Tags</button>
+  <script>
+    let container = document.getElementById("container");
+
+    async function loadMetadata() {
+      let res = await fetch("detected_faces/face_metadata.json");
+      let data = await res.json();
+
+      data.forEach(face => {
+        let div = document.createElement("div");
+        div.className = "face-card";
+
+        let img = document.createElement("img");
+        img.src = face.face_path;
+        div.appendChild(img);
+
+        let input = document.createElement("input");
+        input.placeholder = "Enter name...";
+        input.value = face.tag || "";
+        input.dataset.faceId = face.face_id;
+        div.appendChild(input);
+
+        container.appendChild(div);
+      });
+    }
+
+    async function saveTags() {
+      let inputs = document.querySelectorAll("input");
+      let updated = Array.from(inputs).map(input => ({
+        face_id: input.dataset.faceId,
+        tag: input.value
+      }));
+
+      fetch("/save-tags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated)
+      }).then(res => {
+        if (res.ok) alert("Tags saved.");
+        else alert("Failed to save tags.");
+      });
+    }
+
+    loadMetadata();
+  </script>
+</body>
+</html>

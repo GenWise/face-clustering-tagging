@@ -1,0 +1,134 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tag Face Clusters</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    .cluster { margin-bottom: 30px; border: 1px solid #ddd; padding: 10px; }
+    .face-img { margin: 5px; border: 1px solid #ccc; width: 96px; height: auto; }
+    .cluster-tag { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h2>Cluster Tagging</h2>
+  <div id="clusters"></div>
+  <button onclick="saveClusterTags()">Save Cluster Tags</button>
+  <button onclick="reportUntagged()">Tagging Report</button>
+  <button onclick="deleteUntagged()">Delete Untagged Faces</button>
+  <button onclick="retagUnknowns()">Retag Unknown Clusters</button>
+  <script>
+    let clusterMap = {};
+    let metadata = [];
+    const clusterTags = {};
+    let onlyUnknown = false;
+
+    async function load() {
+      const metaRes = await fetch("detected_faces/face_metadata.json");
+      metadata = await metaRes.json();
+      const clusterRes = await fetch("detected_faces/face_clusters.json");
+      clusterMap = await clusterRes.json();
+
+      const clusters = {};
+      Object.entries(clusterMap).forEach(([faceId, clusterId]) => {
+        if (clusterId < 0) return;
+        if (!clusters[clusterId]) clusters[clusterId] = [];
+        const faceMeta = metadata.find(m => m.face_id === faceId);
+        if (faceMeta) clusters[clusterId].push(faceMeta);
+      });
+
+      const container = document.getElementById("clusters");
+      container.innerHTML = "";
+      Object.entries(clusters).forEach(([clusterId, faces]) => {
+        const knownTags = faces.map(f => f.tag).filter(Boolean);
+        const isAllUnknown = knownTags.length > 0 && knownTags.every(tag => tag === "Unknown");
+        if (onlyUnknown && !isAllUnknown) return;
+
+        const div = document.createElement("div");
+        div.className = "cluster";
+
+        const tagCounts = faces.reduce((acc, f) => {
+          if (f.tag) acc[f.tag] = (acc[f.tag] || 0) + 1;
+          return acc;
+        }, {});
+
+        let dominantTag = null;
+        const entries = Object.entries(tagCounts);
+        if (entries.length === 1 && entries[0][1] >= 1) {
+          dominantTag = entries[0][0];
+        }
+
+        const heading = document.createElement("h4");
+        heading.textContent = `Cluster ${clusterId} (${faces.length} faces)`;
+        if (dominantTag) heading.textContent += ` — Suggested: ${dominantTag}`;
+        div.appendChild(heading);
+
+        faces.forEach(face => {
+          const img = document.createElement("img");
+          img.src = face.face_path;
+          img.className = "face-img";
+          img.title = face.face_id;
+          div.appendChild(img);
+        });
+
+        const input = document.createElement("input");
+        input.placeholder = "Enter name for this cluster...";
+        input.className = "cluster-tag";
+        if (dominantTag) {
+          input.value = dominantTag;
+          clusterTags[clusterId] = dominantTag;
+        }
+        input.oninput = () => { clusterTags[clusterId] = input.value; };
+        div.appendChild(input);
+
+        container.appendChild(div);
+      });
+    }
+
+    function saveClusterTags() {
+      const updates = [];
+      for (const [faceId, clusterId] of Object.entries(clusterMap)) {
+        const tag = clusterTags[clusterId];
+        if (tag && tag.trim() !== "") {
+          updates.push({ face_id: faceId, tag: tag });
+        }
+      }
+      fetch("/save-tags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates)
+      }).then(res => {
+        if (res.ok) alert("Cluster tags saved.");
+        else alert("Failed to save tags.");
+      });
+    }
+
+    function reportUntagged() {
+      const total = metadata.length;
+      const untagged = metadata.filter(m => !m.tag).length;
+      const unknown = metadata.filter(m => m.tag === "Unknown").length;
+      alert(`${total - untagged - unknown} tagged / ${total} total.\n${untagged} untagged, ${unknown} marked as Unknown.`);
+    }
+
+    function deleteUntagged() {
+      const untagged = metadata.filter(m => !m.tag).map(m => m.face_path);
+      fetch("/delete-untagged", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ files: untagged })
+      }).then(res => {
+        if (res.ok) alert("Untagged face files deleted.");
+        else alert("Failed to delete untagged faces.");
+      });
+    }
+
+    function retagUnknowns() {
+      onlyUnknown = true;
+      load();
+    }
+
+    load();
+  </script>
+</body>
+</html>
