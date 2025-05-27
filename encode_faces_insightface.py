@@ -16,8 +16,10 @@ img_paths = sorted(list(Path(img_folder).glob("*.jpg")) + list(Path(img_folder).
 app = FaceAnalysis(name="buffalo_l", providers=['CPUExecutionProvider'])
 app.prepare(ctx_id=0)
 
-output_faces_dir = Path("detected_faces")
-output_faces_dir.mkdir(parents=True, exist_ok=True)
+face_output_dir = Path("detected_faces")
+metadata_dir = Path("face_db")
+face_output_dir.mkdir(parents=True, exist_ok=True)
+metadata_dir.mkdir(parents=True, exist_ok=True)
 
 face_metadata = []
 embeddings = {}
@@ -38,7 +40,7 @@ for img_path in img_paths:
         img = cv2.resize(img, (1080, int(h * scale)), interpolation=cv2.INTER_AREA)
         print(f"🔍 Resized {img_path.name} to width 1080 for better detection")
 
-    debug_resized_path = output_faces_dir / f"debug_resized_{img_path.name}"
+    debug_resized_path = face_output_dir / f"debug_resized_{img_path.name}"
     cv2.imwrite(str(debug_resized_path), img)
 
     brightness = np.mean(img)
@@ -69,7 +71,7 @@ for img_path in img_paths:
 
         if x2 > x1 and y2 > y1:
             face_crop = img[y1:y2, x1:x2]
-            face_crop_path = output_faces_dir / f"{face_id}.jpg"
+            face_crop_path = face_output_dir / f"{face_id}.jpg"
             cv2.imwrite(str(face_crop_path), face_crop)
         else:
             print(f"⚠️ Skipped {face_id} due to invalid bounding box.")
@@ -100,13 +102,13 @@ for img_path in img_paths:
             "tag": auto_tag
         })
 
-    vis_path = output_faces_dir / f"{img_path.stem}_vis.jpg"
+    vis_path = face_output_dir / f"{img_path.stem}_vis.jpg"
     cv2.imwrite(str(vis_path), img)
 
-with open(output_faces_dir / "face_metadata.json", "w") as f:
+with open(metadata_dir / "face_metadata.json", "w") as f:
     json.dump(face_metadata, f, indent=2)
 
-with open(output_faces_dir / "face_embeddings.pkl", "wb") as f:
+with open(metadata_dir / "face_embeddings.pkl", "wb") as f:
     pickle.dump(embeddings, f)
 
 print("\n[InsightFace] Pairwise cosine distances:")

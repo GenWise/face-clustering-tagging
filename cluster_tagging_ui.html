@@ -25,9 +25,9 @@
     let onlyUnknown = false;
 
     async function load() {
-      const metaRes = await fetch("detected_faces/face_metadata.json");
+      const metaRes = await fetch("face_db/face_metadata.json");
       metadata = await metaRes.json();
-      const clusterRes = await fetch("detected_faces/face_clusters.json");
+      const clusterRes = await fetch("face_db/face_clusters.json");
       clusterMap = await clusterRes.json();
 
       const clusters = {};

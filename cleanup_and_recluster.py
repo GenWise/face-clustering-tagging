@@ -9,9 +9,10 @@ import numpy as np
 from sklearn.cluster import DBSCAN
 
 faces_dir = Path("detected_faces")
-meta_file = faces_dir / "face_metadata.json"
-emb_file = faces_dir / "face_embeddings.pkl"
-clust_file = faces_dir / "face_clusters.json"
+metadata_dir = Path("face_db")
+meta_file = metadata_dir / "face_metadata.json"
+emb_file = metadata_dir / "face_embeddings.pkl"
+clust_file = metadata_dir / "face_clusters.json"
 
 # Load metadata and embeddings
 with open(meta_file, "r") as f:

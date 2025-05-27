@@ -6,7 +6,7 @@ from pathlib import Path
 import json
 
 app = Flask(__name__, static_url_path='', static_folder='.')
-metadata_path = Path("detected_faces/face_metadata.json")
+metadata_path = Path("face_db/face_metadata.json")
 
 @app.route('/')
 def index():

@@ -8,7 +8,7 @@ import numpy as np
 from pathlib import Path
 
 # Load embeddings
-with open("detected_faces/face_embeddings.pkl", "rb") as f:
+with open("face_db/face_embeddings.pkl", "rb") as f:
     embeddings = pickle.load(f)  # dict: { face_id: embedding list }
 
 face_ids = list(embeddings.keys())
@@ -23,7 +23,7 @@ labels = dbscan.fit_predict(embedding_matrix)
 clusters = {face_id: int(label) for face_id, label in zip(face_ids, labels)}
 
 # Save cluster assignments
-output_path = Path("detected_faces/face_clusters.json")
+output_path = Path("face_db/face_clusters.json")
 with open(output_path, "w") as f:
     json.dump(clusters, f, indent=2)
 

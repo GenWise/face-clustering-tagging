@@ -1,4 +1,18 @@
+# Ignore raw images and extracted data
 test_images/
 keyframes/
 detected_faces/*.jpg
+detected_faces/debug_resized_*.JPG
+detected_faces/*_vis.jpg
+
+# Ignore large data artifacts
 *.pkl
+
+# Ignore cache and runtime files
+__pycache__/
+*.log
+*.sqlite
+*.db
+
+# Ignore system files
+.DS_Store

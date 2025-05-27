@@ -18,7 +18,7 @@
     let container = document.getElementById("container");
 
     async function loadMetadata() {
-      let res = await fetch("detected_faces/face_metadata.json");
+      let res = await fetch("face_db/face_metadata.json");
       let data = await res.json();
 
       data.forEach(face => {
