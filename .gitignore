@@ -1,18 +1,75 @@
-# Ignore raw images and extracted data
-test_images/
-keyframes/
-detected_faces/*.jpg
-detected_faces/debug_resized_*.JPG
-detected_faces/*_vis.jpg
-
-# Ignore large data artifacts
-*.pkl
-
-# Ignore cache and runtime files
+# Python
 __pycache__/
-*.log
-*.sqlite
-*.db
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Ignore system files
+# Virtual Environment
+yolov8_face_env/
+venv/
+ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Data files
+*.pkl
+*.pt
+*.pth
+*.onnx
+*.bin
+*.mp4
+*.MP4
+*.avi
+*.mov
+*.MOV
+*.jpg
+*.JPG
+*.jpeg
+*.JPEG
+*.png
+*.PNG
+detected_faces/*.jpg
+detected_faces/*.png
+
+# Logs
+*.log
+logs/
+pipeline.log
+batch_processing.log
+
+# Exports
+exports/
+statistics/
+
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Editor directories and files
+.idea
+.vscode
+*.swp
+*.swo
+
+# Keep specific files
+!yolov8n-face.pt
+!requirements.txt
