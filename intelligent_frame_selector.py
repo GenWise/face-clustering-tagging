@@ -226,40 +226,57 @@ class IntelligentFrameSelector:
                       
         return should_select
         
-    def process_video(self, video_path, output_dir=None, save_frames=False):
-        """Process a video and select keyframes for API processing"""
-        video_path = Path(video_path)
-        if output_dir:
-            output_dir = Path(output_dir)
-            output_dir.mkdir(exist_ok=True, parents=True)
+    def process_video(self, video_path, output_dir=None, save_frames=False, frame_interval=30):
+        """Process a video and select keyframes
+        
+        Args:
+            video_path (str): Path to the video file
+            output_dir (str, optional): Directory to save keyframes to
+            save_frames (bool, optional): Whether to save all processed frames
+            frame_interval (int, optional): Interval between frames to process (higher = fewer frames)
             
-        # Reset state for new video
-        self.reset_state()
+        Returns:
+            List of selected frame information
+        """
+        video_path = Path(video_path)
         
         # Open video
         cap = cv2.VideoCapture(str(video_path))
         if not cap.isOpened():
-            logger.error(f"Could not open video: {video_path}")
+            logger.error(f"Failed to open video: {video_path}")
             return []
             
+        # Get video properties
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         fps = cap.get(cv2.CAP_PROP_FPS)
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        duration = total_frames / fps if fps > 0 else 0
+        duration = frame_count / fps if fps > 0 else 0
         
         logger.info(f"Processing video: {video_path.name}, {fps:.2f} fps, {duration:.2f} seconds")
         
-        frame_index = 0
-        selected_frames_info = []
+        # Create output directory if needed
+        if output_dir and save_frames:
+            output_dir = Path(output_dir)
+            output_dir.mkdir(exist_ok=True, parents=True)
+            
+        # Reset state
+        self.reset_state()
         
-        while True:
+        # Prepare for frame processing
+        selected_frames = []
+        prev_frame = None
+        prev_gray = None
+        frame_index = 0
+        
+        # Process frames
+        while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
                 
             frame_index += 1
             
-            # Process every Nth frame to reduce computation
-            if frame_index % 30 != 0 and frame_index != 1:  # Process first frame and then every 30th
+            # Only process every n-th frame
+            if frame_index % frame_interval != 0:
                 continue
                 
             # Check if this frame should be selected
@@ -271,7 +288,7 @@ class IntelligentFrameSelector:
                     'timestamp_formatted': time.strftime('%H:%M:%S', time.gmtime(timestamp)),
                     'face_count': self.last_face_count
                 }
-                selected_frames_info.append(frame_info)
+                selected_frames.append(frame_info)
                 
                 # Save frame if requested
                 if save_frames and output_dir:
@@ -285,22 +302,22 @@ class IntelligentFrameSelector:
         if output_dir:
             metadata = {
                 'video_path': str(video_path),
-                'total_frames': total_frames,
+                'total_frames': frame_count,
                 'duration': duration,
                 'fps': fps,
                 'frames_processed': self.frame_count,
-                'frames_selected': len(selected_frames_info),
-                'selection_rate': len(selected_frames_info) / self.frame_count if self.frame_count > 0 else 0,
-                'selected_frames': selected_frames_info
+                'frames_selected': len(selected_frames),
+                'selection_rate': len(selected_frames) / self.frame_count if self.frame_count > 0 else 0,
+                'selected_frames': selected_frames
             }
             
             with open(output_dir / f"{video_path.stem}_selection.json", 'w') as f:
                 json.dump(metadata, f, indent=2)
                 
-        logger.info(f"Video processing complete: {len(selected_frames_info)} frames selected "
-                  f"out of {self.frame_count} processed ({total_frames} total)")
+        logger.info(f"Video processing complete: {len(selected_frames)} frames selected "
+                  f"out of {self.frame_count} processed ({frame_count} total)")
                   
-        return selected_frames_info
+        return selected_frames
 
 def main():
     """Run frame selection on a sample video"""

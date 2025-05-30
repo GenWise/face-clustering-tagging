@@ -45,10 +45,11 @@ class VisionAPIProcessor:
             
         # Set API keys
         self.api_keys = {}
+        
+        # Process the api_key parameter
         if api_key:
-            # Determine which API the key is for based on format or explicitly set
             if isinstance(api_key, dict):
-                self.api_keys = api_key
+                self.api_keys.update(api_key)
             else:
                 # Try to guess which API the key is for
                 if api_key.startswith('sk-'):
@@ -56,12 +57,14 @@ class VisionAPIProcessor:
                 elif len(api_key) > 30:
                     self.api_keys['google'] = api_key
         
-        # Also check environment variables for API keys
-        if 'OPENAI_API_KEY' in os.environ and 'openai' not in self.api_keys:
+        # Also check environment variables for API keys if not already set
+        if 'openai' not in self.api_keys and 'OPENAI_API_KEY' in os.environ:
             self.api_keys['openai'] = os.environ['OPENAI_API_KEY']
+            print(f"Using OpenAI API key from environment: {self.api_keys['openai'][:10]}...")
             
-        if 'GOOGLE_API_KEY' in os.environ and 'google' not in self.api_keys:
+        if 'google' not in self.api_keys and 'GOOGLE_API_KEY' in os.environ:
             self.api_keys['google'] = os.environ['GOOGLE_API_KEY']
+            print(f"Using Google API key from environment: {self.api_keys['google'][:10]}...")
             
         # Create cache directory if needed
         if self.config['cache_results']:
@@ -150,7 +153,7 @@ class VisionAPIProcessor:
             }
             
             payload = {
-                "model": "gpt-4-vision-preview",
+                "model": "gpt-4o",
                 "messages": [
                     {
                         "role": "user",

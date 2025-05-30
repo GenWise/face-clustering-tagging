@@ -66,13 +66,13 @@ class BatchVideoProcessor:
         return True
     
     def process_video(self, video_path):
-        """Process a single video using the keyframe extraction script"""
+        """Process a single video using the enhanced video processor script"""
         video_name = video_path.stem
         logger.info(f"Processing {video_name}")
         
         try:
-            # Call the main processing script
-            cmd = [sys.executable, "kf_extract_and_processing.py", str(video_path)]
+            # Call the enhanced video processor script
+            cmd = [sys.executable, "enhanced_video_processor.py", str(video_path)]
             result = subprocess.run(cmd, capture_output=True, text=True)
             
             if result.returncode != 0:
